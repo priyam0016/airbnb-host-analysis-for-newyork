@@ -11,6 +11,8 @@ library(leaflet) # for interactive maps
 library(mapview) # for interactive maps
 library(shiny)   # for web applications
 
+library(car)
+
 setDT(airbnbOriginalDF)
 str(airbnbOriginalDF)
 
@@ -141,8 +143,9 @@ nrow(airbnbBronx)
 airbnbStatenIsland = airbnbCleaned[neighbourhood_group=='Staten Island']
 nrow(airbnbStatenIsland)
 
+#Creating corelation matrix for different boroughs
 diagnolcol = c("price","minimum_nights","reviews/month", "numberOfReviews", "availabilityFor365")
-#Priyam below#
+
 pairs(data.table(
   airbnbManhattan$price, 
   airbnbManhattan$minimum_nights, 
@@ -177,6 +180,11 @@ pairs(data.table(
   airbnbBronx$reviews_per_month, 
   airbnbBronx$number_of_reviews, 
   airbnbBronx$availability_365), labels = diag.col)
+pairs(data.table(airbnbBronx$price, 
+                 airbnbBronx$minimum_nights, 
+                 airbnbBronx$reviews_per_month, 
+                 airbnbBronx$number_of_reviews, 
+                 airbnbBronx$availability_365), panel = function (x, y, ...) {points(x, y, ...);abline(lm(y ~ x), col = "grey")}, pch = ".", cex = 1.5)
 
 
 cor(airbnbCleaned[,c("host_id","reviews_per_month","availability_365")])
@@ -189,3 +197,18 @@ mapnyc <- data.frame(latitude = c(40.7032815,40.7082398),
 ggplot(airbnbCleaned, aes(x=longitude, y=latitude, COLOR= 'red'),alpha =0.03) +
   geom_point(size=0.8)
 
+
+detach(airbnbManhattan)
+attach(airbnbCleaned)
+
+unique(airbnbManhattan$room_type)
+#Tests
+#T -test for price against different boroughs
+
+with(data=airbnbCleaned,t.test(price[neighbourhood_group=="Manhattan"],price[neighbourhood_group=="Brooklyn"],var.equal=TRUE))
+
+with(data=airbnbCleaned,t.test(price[neighbourhood_group=="Queens"],price[neighbourhood_group=="Bronx"],var.equal=TRUE))
+
+#Levene test for prices and neighbourhood_group
+
+leveneTest(price ~ neighbourhood_group, data=airbnbCleaned)
